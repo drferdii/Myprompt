@@ -8,8 +8,6 @@
 <tr>
 <td width="28%" align="center" style="vertical-align:middle;">
 <img src="https://i.postimg.cc/52CKHcQV/prompt.png" alt="Myprompt" width="320">
-<br />
-<sub><b>Myprompt</b> · Multi-LLM Prompt Transformation Platform</sub>
 </td>
 <td width="72%" style="vertical-align:middle;">
 
