@@ -6,33 +6,37 @@
 
 <table width="100%">
 <tr>
-<td width="36%" align="center" valign="middle">
-<img src="https://i.postimg.cc/h4ywJ1vt/Codexprompt-line-removebg-preview.png" alt="Sentra Prompt" width="280">
-  <br />
-  <sub><b>Sentra Prompt</b> · Multi-LLM Prompt Transformation Platform</sub>
+<td width="28%" align="center" style="vertical-align:middle;">
+<img src="https://i.postimg.cc/h4ywJ1vt/Codexprompt-line-removebg-preview.png" alt="Sentra Prompt" width="160">
+<br />
+<sub><b>Sentra Prompt</b> · Multi-LLM Prompt Transformation Platform</sub>
 </td>
-<td width="64%" valign="middle">
+<td width="72%" style="vertical-align:middle;">
 
 # Sentra Prompt
 ### Multi-LLM Optimization · Desktop Shell · Real-Time Streaming
 
-<p>
-  <b>Built by Dr. Ferdi Iskandar · Sentra Artificial Intelligence</b><br />
-  Prompt Engineering · LLM Infrastructure · Kediri, Indonesia · UTC+7
-</p>
+<b>Built by Dr. Ferdi Iskandar · Sentra Artificial Intelligence</b><br />
+Prompt Engineering · LLM Infrastructure · Kediri, Indonesia · UTC+7
 
-<p>
-  <img src="https://img.shields.io/badge/Next.js-15-111111?style=flat-square" />
-  <img src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square" />
-  <img src="https://img.shields.io/badge/TypeScript-strict-2f4f4f?style=flat-square" />
-  <img src="https://img.shields.io/badge/Electron-desktop-47848F?style=flat-square" />
-  <img src="https://img.shields.io/badge/Providers-4_LLMs-1a1a1a?style=flat-square" />
-  <img src="https://img.shields.io/badge/License-MIT-c41e3a?style=flat-square" />
-  <img src="https://img.shields.io/badge/version-0.1.0-orange?style=flat-square" />
-</p>
+<img src="https://img.shields.io/badge/Next.js-15-111111?style=flat-square" />
+<img src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square" />
+<img src="https://img.shields.io/badge/TypeScript-strict-2f4f4f?style=flat-square" />
+<img src="https://img.shields.io/badge/Electron-desktop-47848F?style=flat-square" />
+<img src="https://img.shields.io/badge/Providers-4_LLMs-1a1a1a?style=flat-square" />
+<img src="https://img.shields.io/badge/License-MIT-c41e3a?style=flat-square" />
+
 </td>
 </tr>
 </table>
+
+---
+
+### What's inside this README
+
+This isn't a usage guide — it's a mechanism guide. Past the front page, every section traces what actually happens to a prompt between the moment a user hits "optimize" and the moment a validated six-heading super-prompt comes back. If you're contributing to `lib/optimizer/`, `lib/templates/`, or `lib/evaluator/`, start at **Why Six Headings**, then **Core Mechanics**.
+
+`Front Page` · `Why Six Headings` · `Core Mechanics` · `Full Feature Map + Engine Internals` · `Provider Matrix` · `System Architecture` · `Setup` · `Project Structure` · `Commands` · `Tech Stack` · `Security` · `Operating Standard`
 
 ---
 
@@ -67,6 +71,67 @@ A production-ready prompt with clear persona assignment, explicit task scoping, 
 </td>
 </tr>
 </table>
+
+---
+
+## ── WHY SIX HEADINGS · THE PROMPT-ENGINEERING CASE
+
+The six-heading format isn't arbitrary — each heading does one specific job in steering a model's behavior. Drop any one of them and a predictable failure mode shows up.
+
+<table>
+<tr>
+<th align="left">Heading</th>
+<th align="left">What it controls</th>
+<th align="left">What breaks if it's missing</th>
+</tr>
+<tr>
+<td><b>ROLE</b></td>
+<td>Persona-conditioning — primes the model's vocabulary, depth, and assumptions ("senior backend engineer" vs. no role at all)</td>
+<td>Generic, average-of-the-internet answers with no domain register</td>
+</tr>
+<tr>
+<td><b>TASK</b></td>
+<td>An explicit, scoped instruction — one verb, one deliverable</td>
+<td>The model guesses intent and answers the wrong question</td>
+</tr>
+<tr>
+<td><b>CONTEXT</b></td>
+<td>Domain facts and background the model can't infer on its own</td>
+<td>Hallucinated assumptions filling the gap you left open</td>
+</tr>
+<tr>
+<td><b>APPROACH</b></td>
+<td>Reasoning method — step-by-step, TDD-first, compare-then-decide</td>
+<td>The model picks its own (often shallower) reasoning path</td>
+</tr>
+<tr>
+<td><b>CONSTRAINTS</b></td>
+<td>Explicit boundaries — what to avoid, hard limits, edge cases to skip</td>
+<td>Scope creep; the model "helpfully" does more than asked</td>
+</tr>
+<tr>
+<td><b>OUTPUT FORMAT</b></td>
+<td>Structure, length, tone, rendering target</td>
+<td>Unparseable prose where a structured response was needed</td>
+</tr>
+</table>
+
+**Before / after, condensed:**
+
+```text
+RAW INPUT
+"write me something about onboarding new employees"
+
+SUPER-PROMPT OUTPUT
+ROLE            HR operations specialist with SaaS onboarding experience
+TASK            Draft a 5-day new-employee onboarding checklist
+CONTEXT         Remote-first team, 10-person engineering org
+APPROACH        Sequence by day, front-load access/tooling setup
+CONSTRAINTS     No legal/compliance language — that's a separate doc
+OUTPUT FORMAT   Markdown checklist, under 400 words
+```
+
+The last heading — OUTPUT FORMAT — is also why Sentra Prompt's own parser can extract structured data from streamed LLM output programmatically. The format isn't just a writing convention; it's a contract the rest of the pipeline depends on.
 
 ---
 
@@ -107,6 +172,62 @@ SUPER-PROMPT OUTPUT
         OUTPUT FORMAT   ← Structure, length, tone, rendering
 ```
 
+### Request Lifecycle — Sequence Diagram
+
+```mermaid
+sequenceDiagram
+    participant U as User (Web / Desktop)
+    participant API as /api/optimize
+    participant ENG as Optimizer Engine
+    participant TPL as Template Matcher (DEEP only)
+    participant LLM as Provider Adapter
+    participant PRS as Heading Parser
+
+    U->>API: POST raw prompt + lane (INTERACTIVE | DEEP)
+    API->>ENG: dispatch(lane, rawPrompt)
+    alt lane == DEEP
+        ENG->>TPL: embed(rawPrompt)
+        TPL->>TPL: cosine similarity vs. template library
+        TPL-->>ENG: top-k matched template(s)
+        ENG->>ENG: inject matched template into system prompt
+    end
+    ENG->>LLM: stream(systemPrompt, userPrompt)
+    LLM-->>U: status: preparing
+    opt lane == DEEP
+        LLM-->>U: status: waiting (retrieval latency)
+    end
+    LLM-->>U: status: streaming (tokens)
+    LLM-->>PRS: full response
+    PRS->>PRS: extract ROLE / TASK / CONTEXT / APPROACH / CONSTRAINTS / OUTPUT
+    alt heading missing
+        PRS->>LLM: regenerate with stricter format instruction
+        LLM-->>PRS: full response (retry)
+    end
+    PRS-->>U: validated super-prompt
+```
+
+### DEEP Lane — Template Retrieval Internals
+
+```mermaid
+flowchart LR
+    A[Raw Prompt] --> B["embeddings/generator.ts<br/>text → vector"]
+    B --> C[Vector 1×N]
+    C --> D["embeddings/similarity.ts<br/>cosine distance"]
+    D --> E["templates/loader.ts<br/>curated template library"]
+    E --> F[Score every template]
+    F --> G{Top match above<br/>similarity threshold?}
+    G -- yes --> H["templates/renderer.ts<br/>inject into system prompt"]
+    G -- no --> I[Fallback —<br/>behaves like INTERACTIVE]
+    H --> J[Prompt Builder]
+    I --> J
+```
+
+The fallback path matters as much as the match path: if nothing in the library clears the similarity threshold, DEEP doesn't force a bad match — it silently degrades to INTERACTIVE-equivalent behavior rather than injecting irrelevant template context.
+
+### Heading Parser — Validation & Retry
+
+`lib/optimizer/super-prompt-format.ts` extracts the six headings from streamed output using structured parsing, not a single greedy regex — each heading has to appear with its own boundary before the next one starts. If a heading is missing or empty, the engine fires one regeneration pass with a stricter format instruction appended to the system prompt. If the retry still comes back incomplete, the raw output is returned to the user with a structure-validation warning rather than failing silently. *(Retry count and threshold are tunable — check `super-prompt-format.ts` for the current limit before documenting it as a hard guarantee elsewhere.)*
+
 ### INTERACTIVE vs DEEP
 
 <table>
@@ -139,6 +260,16 @@ SUPER-PROMPT OUTPUT
 <td><b>Output depth</b></td>
 <td>Standard structured super-prompt</td>
 <td>Richer super-prompt with retrieval-informed context</td>
+</tr>
+<tr>
+<td><b>Extra token overhead</b></td>
+<td>None — system prompt only</td>
+<td>Template context adds to system prompt length</td>
+</tr>
+<tr>
+<td><b>Failure mode</b></td>
+<td>Heading parse failure → one retry</td>
+<td>Heading parse failure → one retry; no-match → silent INTERACTIVE fallback</td>
 </tr>
 </table>
 
@@ -191,7 +322,92 @@ A console-style desktop application for running Optimizer and Transformer locall
 
 </td>
 </tr>
+<tr>
+<td colspan="2" valign="top">
+
+### 05 · BAHASA NATIVE
+**Native Indonesian Prompt Engineering**
+
+Processes raw input directly in Bahasa Indonesia — no forced translation pass before optimization. The six-heading format maps natively, so the structural rigor doesn't get lost going from English to Indonesian:
+
+`PERAN (Role) · TUGAS (Task) · KONTEKS (Context) · PENDEKATAN (Approach) · BATASAN (Constraints) · FORMAT KELUARAN (Output Format)`
+
+<p align="center">
+<img src="https://i.postimg.cc/mrmqQYjg/prompt.png" alt="Sentra Prompt — Bahasa Indonesia native prompting" width="700">
+</p>
+
+**Use case:** tim klinis, akademik, atau korporat di Indonesia yang menulis instruksi langsung dalam Bahasa Indonesia tanpa harus melalui terjemahan ke Inggris dulu.
+
+</td>
+</tr>
 </table>
+
+### Engine Internals — Mechanism Notes
+
+These are implementation-level notes for contributors working inside `lib/`. Where exact constants live in code rather than docs, that's flagged explicitly instead of guessed at.
+
+**Optimizer — strategy pattern.** `lib/optimizer/strategies.ts` implements INTERACTIVE and DEEP as two concrete strategies behind a shared interface (`buildPrompt()`, `shouldRetrieveTemplate()`). `engine.ts` only knows which strategy to dispatch to — it doesn't branch on lane logic itself. Adding a third lane means writing a new strategy, not touching the dispatcher.
+
+**Transformer — mode matrix.** Each mode shifts the same four levers: tone marker, sentence length, vocabulary register, and structural change. This is the documented intent for `lib/transform/engine.ts` — confirm against the live implementation before treating exact wording as final.
+
+<table>
+<tr>
+<th align="left">Mode</th>
+<th align="left">Tone marker</th>
+<th align="left">Vocabulary register</th>
+<th align="left">Structural change</th>
+</tr>
+<tr>
+<td><b>Casual</b></td>
+<td>Contractions, direct address</td>
+<td>Everyday words, minimal jargon</td>
+<td>Shorter sentences, fewer subordinate clauses</td>
+</tr>
+<tr>
+<td><b>Professional</b></td>
+<td>Neutral, declarative</td>
+<td>Domain-standard terminology</td>
+<td>Balanced sentence length, clear topic sentences</td>
+</tr>
+<tr>
+<td><b>Creative</b></td>
+<td>Varied rhythm, figurative language allowed</td>
+<td>Broader, more associative vocabulary</td>
+<td>Looser structure, room for narrative framing</td>
+</tr>
+<tr>
+<td><b>Technical</b></td>
+<td>Precise, unambiguous</td>
+<td>Field-specific terms, defined on first use</td>
+<td>Numbered steps, explicit preconditions</td>
+</tr>
+</table>
+
+**Evaluator — scoring methodology.** Each dimension in `lib/evaluator/dimensions.ts` runs an independent heuristic check, then `lib/evaluator/scoring.ts` combines all four into one composite score.
+
+```mermaid
+flowchart TD
+    P[Input Prompt] --> C1[Clarity]
+    P --> C2[Specificity]
+    P --> C3[Actionability]
+    P --> C4[Output Quality]
+    C1 --> AGG["scoring.ts<br/>weighted aggregate"]
+    C2 --> AGG
+    C3 --> AGG
+    C4 --> AGG
+    AGG --> R[Composite score]
+    AGG --> FB[Structured feedback<br/>per weak dimension]
+```
+
+What each dimension actually checks:
+- **Clarity** — flags ambiguous pronouns, undefined jargon, multiple unrelated asks bundled into one prompt.
+- **Specificity** — rewards concrete nouns, numbers, and named entities; penalizes filler like "something" or "good."
+- **Actionability** — checks for an explicit deliverable verb (write, compare, calculate) vs. an open-ended statement with no clear output.
+- **Output Quality** — a forward-looking proxy: how well-formed the eventual LLM response is likely to be, given the prompt's structure.
+
+*Weighting between dimensions is configured in `scoring.ts` — document the exact weights there once they're finalized rather than restating a number here that could drift out of sync with the code.*
+
+**Desktop shell — IPC contract.** Every renderer-to-main call goes through a typed handler in `desktop/ipc/`, validated at the boundary (see Security, below) before it reaches Electron's main process. The renderer never gets direct Node access — `nodeIntegration` stays off.
 
 ---
 
@@ -231,6 +447,8 @@ A console-style desktop application for running Optimizer and Transformer locall
 </table>
 
 BYOK = Bring Your Own Key. No keys are stored server-side. All provider credentials are encrypted client-side and never logged.
+
+Every provider in `lib/llm/providers/` implements the same adapter contract — a single `streamCompletion()` interface that the engine layer calls without knowing which provider is underneath. Adding a new provider means writing one adapter file, not touching the optimizer, transformer, or evaluator.
 
 ---
 
@@ -284,6 +502,31 @@ ELECTRON (Desktop)
     │   preload.ts   ← context bridge (no nodeIntegration)
     │   ipc/         ← IPC handlers for each engine action
     │   renderer/    ← Terminal-style UI, streaming display
+```
+
+### Visual Flow
+
+The tree above is the file map. This is the same system as a request-routing diagram — useful when you're tracing where a call goes rather than where a file lives.
+
+```mermaid
+flowchart TB
+    UI[Web UI / Desktop Shell] --> API[Next.js API Routes]
+    API -->|/api/optimize| OPT[Optimizer Engine]
+    API -->|/api/transform| TRF[Transformer Engine]
+    API -->|/api/evaluate| EVL[Evaluator Engine]
+    OPT --> TPL[Template Matcher]
+    OPT --> LLMR[LLM Provider Registry]
+    TRF --> LLMR
+    EVL --> LLMR
+    TPL --> EMB[Embeddings Layer]
+    LLMR --> PROV1[Anthropic]
+    LLMR --> PROV2[OpenAI]
+    LLMR --> PROV3[xAI]
+    LLMR --> PROV4[Mistral]
+    LLMR --> PROV5[OpenAI-compatible]
+    API --> AUTH[Supabase Auth]
+    AUTH --> DB[(Supabase PostgreSQL)]
+    OPT -. IPC .-> ELECTRON[Electron Desktop Shell]
 ```
 
 ---
@@ -375,7 +618,7 @@ Myprompt/
 │   ├── main.ts                 Electron main process
 │   ├── preload.ts              Context bridge
 │   ├── ipc/                    IPC handlers per feature
-│   └── renderer/               Terminal-style console UI
+│   └── renderer/                Terminal-style console UI
 │
 ├── prisma/                     Database schema + migrations
 │   ├── schema.prisma
