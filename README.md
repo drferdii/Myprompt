@@ -28,6 +28,7 @@
   <img src="https://img.shields.io/badge/Electron-desktop-47848F?style=flat-square" />
   <img src="https://img.shields.io/badge/Providers-4_LLMs-1a1a1a?style=flat-square" />
   <img src="https://img.shields.io/badge/License-MIT-c41e3a?style=flat-square" />
+  <img src="https://img.shields.io/badge/version-0.1.0-orange?style=flat-square" />
 </p>
 </td>
 </tr>
