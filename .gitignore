@@ -1,0 +1,52 @@
+# ai tool local config
+.claude/
+
+# dependencies
+node_modules
+.pnpm-store
+
+# next.js
+.next/
+out/
+
+# production
+build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# env
+.env
+.env*.local
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# prisma
+prisma/migrations/**/migration_lock.toml
+
+# electron build output
+dist-electron/
+
+# local data & workspace
+data/
+*.bat
+
+# superpowers & agent local files
+docs/superpowers/
+skills-lock.json
+
+# local agent sessions
+.agent/sessions/
+.agent/archive/
+.agent/reports/
