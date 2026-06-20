@@ -13,7 +13,7 @@
 </td>
 <td width="72%" style="vertical-align:middle;">
 
-# Myprompt
+# Myprompt — *Simplicity*
 ### Multi-LLM Optimization · Desktop Shell · Real-Time Streaming
 
 <b>Built by Dr. Ferdi Iskandar · Sentra Artificial Intelligence</b><br />
@@ -778,6 +778,6 @@ No desktop action without IPC validation at the boundary.
 ---
 
 <p align="center">
-  <b>Myprompt — built to make every prompt count.</b><br />
+  <b>Myprompt · Simplicity — built to make every prompt count.</b><br />
   <sub>Sentra Artificial Intelligence · Dr. Ferdi Iskandar · Indonesia</sub>
 </p>
