@@ -7,7 +7,7 @@
 <table width="100%">
 <tr>
 <td width="28%" align="center" style="vertical-align:middle;">
-<img src="https://i.postimg.cc/h4ywJ1vt/Codexprompt-line-removebg-preview.png" alt="Sentra Prompt" width="160">
+<img src="https://i.postimg.cc/h4ywJ1vt/Codexprompt-line-removebg-preview.png" alt="Sentra Prompt" width="320">
 <br />
 <sub><b>Sentra Prompt</b> · Multi-LLM Prompt Transformation Platform</sub>
 </td>
