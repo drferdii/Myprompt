@@ -1,5 +1,5 @@
 <!--
-  Sentra Prompt — Repository README
+  Myprompt — Repository README
   Multi-LLM Prompt Transformation Platform
   Built by Dr. Ferdi Iskandar · Sentra Artificial Intelligence
 -->
@@ -7,13 +7,13 @@
 <table width="100%">
 <tr>
 <td width="28%" align="center" style="vertical-align:middle;">
-<img src="https://i.postimg.cc/h4ywJ1vt/Codexprompt-line-removebg-preview.png" alt="Sentra Prompt" width="320">
+<img src="https://i.postimg.cc/h4ywJ1vt/Codexprompt-line-removebg-preview.png" alt="Myprompt" width="320">
 <br />
-<sub><b>Sentra Prompt</b> · Multi-LLM Prompt Transformation Platform</sub>
+<sub><b>Myprompt</b> · Multi-LLM Prompt Transformation Platform</sub>
 </td>
 <td width="72%" style="vertical-align:middle;">
 
-# Sentra Prompt
+# Myprompt
 ### Multi-LLM Optimization · Desktop Shell · Real-Time Streaming
 
 <b>Built by Dr. Ferdi Iskandar · Sentra Artificial Intelligence</b><br />
@@ -42,7 +42,7 @@ This isn't a usage guide — it's a mechanism guide. Past the front page, every 
 
 ## ── FRONT PAGE · WHAT THIS IS
 
-Sentra Prompt is a multi-LLM prompt transformation platform. It takes raw, unstructured ideas and turns them into precision-crafted, structured super-prompts — optimized for clarity, specificity, and LLM performance across any provider.
+Myprompt is a multi-LLM prompt transformation platform. It takes raw, unstructured ideas and turns them into precision-crafted, structured super-prompts — optimized for clarity, specificity, and LLM performance across any provider.
 
 It runs as a web application (port 3013) and as a native desktop shell built on Electron, with real-time streaming output, two optimizer speed lanes, and full provider flexibility.
 
@@ -131,7 +131,7 @@ CONSTRAINTS     No legal/compliance language — that's a separate doc
 OUTPUT FORMAT   Markdown checklist, under 400 words
 ```
 
-The last heading — OUTPUT FORMAT — is also why Sentra Prompt's own parser can extract structured data from streamed LLM output programmatically. The format isn't just a writing convention; it's a contract the rest of the pipeline depends on.
+The last heading — OUTPUT FORMAT — is also why Myprompt's own parser can extract structured data from streamed LLM output programmatically. The format isn't just a writing convention; it's a contract the rest of the pipeline depends on.
 
 ---
 
@@ -333,7 +333,7 @@ Processes raw input directly in Bahasa Indonesia — no forced translation pass 
 `PERAN (Role) · TUGAS (Task) · KONTEKS (Context) · PENDEKATAN (Approach) · BATASAN (Constraints) · FORMAT KELUARAN (Output Format)`
 
 <p align="center">
-<img src="https://i.postimg.cc/mrmqQYjg/prompt.png" alt="Sentra Prompt — Bahasa Indonesia native prompting" width="700">
+<img src="https://i.postimg.cc/mrmqQYjg/prompt.png" alt="Myprompt — Bahasa Indonesia native prompting" width="700">
 </p>
 
 **Use case:** tim klinis, akademik, atau korporat di Indonesia yang menulis instruksi langsung dalam Bahasa Indonesia tanpa harus melalui terjemahan ke Inggris dulu.
@@ -778,6 +778,6 @@ No desktop action without IPC validation at the boundary.
 ---
 
 <p align="center">
-  <b>Sentra Prompt — built to make every prompt count.</b><br />
+  <b>Myprompt — built to make every prompt count.</b><br />
   <sub>Sentra Artificial Intelligence · Dr. Ferdi Iskandar · Indonesia</sub>
 </p>
