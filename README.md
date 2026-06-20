@@ -7,7 +7,7 @@
 <table width="100%">
 <tr>
 <td width="28%" align="center" style="vertical-align:middle;">
-<img src="https://i.postimg.cc/h4ywJ1vt/Codexprompt-line-removebg-preview.png" alt="Myprompt" width="320">
+<img src="https://i.postimg.cc/52CKHcQV/prompt.png" alt="Myprompt" width="320">
 <br />
 <sub><b>Myprompt</b> · Multi-LLM Prompt Transformation Platform</sub>
 </td>
