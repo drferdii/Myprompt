@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sentra Console — Dark Edition</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">  <link rel="stylesheet" href="./index.css"></head>
+<body>
+
+  <!-- Mini Widget Toggle -->
+  <div class="mini-widget" id="miniWidget" hidden>
+
+    <!-- Collapsed State -->
+    <div class="mini-bar" id="miniBar" title="Sentra Console — Click to expand">
+      <div class="mini-status ready" id="miniStatus"></div>
+      <div class="mini-hint">Sentra &mdash; Click to expand</div>
+    </div>
+
+    <!-- Expanded State -->
+    <div class="mini-panel" id="miniPanel" hidden>
+
+      <!-- Header -->
+      <div class="panel-header" id="panelHeader">
+        <div class="header-left">
+          <div class="header-status-dot"></div>
+          <div class="header-title-stack">
+            <span class="header-title" id="mTitle">Sentra Prompt Console</span>
+            <span class="header-subtitle" id="mSubtitle">Desktop prompt shell</span>
+          </div>
+        </div>
+        <div class="header-right">
+          <span class="header-model-chip" id="mModel">grok-3-fast</span>
+          <button class="header-btn" id="mCollapseBtn" title="Collapse" type="button">&#8212;</button>
+        </div>
+      </div>
+
+      <!-- Mode Bar -->
+      <div class="mini-mode-bar">
+        <button class="mini-mode-btn active" id="mTransformBtn" data-mode="transform" type="button">
+          <strong>Transform</strong><span>Prompt scaffolder.</span>
+        </button>
+        <button class="mini-mode-btn" id="mOptimizeBtn" data-mode="optimize" type="button">
+          <strong>Optimizer</strong><span>LLM-backed editor.</span>
+        </button>
+      </div>
+
+      <!-- Status Panel -->
+      <div class="mini-status-panel">
+        <div class="mini-status-header">
+          <strong id="mStatusTitle">Transform</strong>
+          <span class="mini-status-tag" id="mStatusTag">Default Mode</span>
+        </div>
+        <div class="mini-status-copy" id="mStatusCopy">Wrap raw prompts into a deterministic prompt-engineering scaffold.</div>
+      </div>
+
+      <!-- Console -->
+      <div class="mini-console" id="mDisplay"></div>
+
+      <!-- HUD -->
+      <div class="mini-hud">
+        <div class="mini-hud-item"><span class="mini-hud-label">Temp</span><span class="mini-hud-value" id="mHudTemp">42&deg;C</span></div>
+        <div class="mini-hud-item"><span class="mini-hud-label">Load</span><span class="mini-hud-value" id="mHudLoad">12%</span></div>
+        <div class="mini-hud-item"><span class="mini-hud-label">Mem</span><span class="mini-hud-value">4.2/32</span></div>
+      </div>
+
+      <!-- Command Bar -->
+      <div class="mini-cmd-bar">
+        <input type="text" id="mCmdInput" class="mini-cmd-input" placeholder="Prompt atau command..." autocomplete="off">
+        <button class="mini-btn-sm mini-btn-sec" id="mClearBtn" type="button">CLR</button>
+        <button class="mini-btn-sm mini-btn-exec" id="mRunBtn" type="button">EXEC</button>
+      </div>
+
+      <!-- Footer -->
+      <div class="mini-footer">
+        <div class="mini-footer-left">Sentra Mini</div>
+        <div>Transform + Optimizer</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Console Enclosure -->
+  <div class="console-rig" id="consoleRig">
+    <div class="console-body" id="consoleShell">
+
+      <!-- Front Panel -->
+      <div class="front-panel">
+        <div class="io-label">Sentra Console</div>
+        <div class="led-strip"></div>
+        <button class="power-btn" id="powerBtn" title="Power">
+          <div class="power-led-ring standby" id="powerLedRing"></div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Top Vent -->
+      <div class="top-vent-section">
+        <div class="vent-grille"></div>
+        <div class="vent-highlight"></div>
+      </div>
+
+      <!-- Side Vents -->
+      <div class="side-vent">
+        <div class="vent-hole"></div><div class="vent-hole"></div><div class="vent-hole"></div>
+        <div class="vent-hole"></div><div class="vent-hole"></div><div class="vent-hole"></div>
+        <div class="vent-hole"></div><div class="vent-hole"></div><div class="vent-hole"></div>
+        <div class="vent-hole"></div><div class="vent-hole"></div><div class="vent-hole"></div>
+        <div class="vent-hole"></div><div class="vent-hole"></div><div class="vent-hole"></div>
+        <div class="vent-hole"></div><div class="vent-hole"></div><div class="vent-hole"></div>
+      </div>
+
+      <!-- Screen Area -->
+      <div class="screen-area">
+        <div class="screen-content" id="screenContent" style="display:flex;flex-direction:column;height:100%;">
+
+          <!-- Window Controls (floating, no title bar) -->
+          <div class="window-controls">
+            <div class="status-dot"></div>
+            <button class="mini-toggle-btn" id="miniToggleBtn" title="Minimize to mini widget" type="button">&#8212;</button>
+            <button class="close-btn" id="closeBtn" type="button">&times;</button>
+          </div>
+
+          <!-- Mode Bar -->
+          <div class="mode-bar">
+            <button class="mode-btn active" id="transformModeBtn" data-mode="transform">
+              <strong>Transform</strong>
+            </button>
+            <button class="mode-btn" id="optimizeModeBtn" data-mode="optimize">
+              <strong>Optimizer</strong>
+            </button>
+          </div>
+
+          <!-- Status Panel -->
+          <div class="status-panel">
+            <div class="status-panel-header">
+              <strong id="statusTitle">Transform</strong>
+              <span class="status-label" id="statusTag">Default Mode</span>
+            </div>
+            <div class="status-copy" id="statusCopy">Wrap raw prompts into a deterministic prompt-engineering scaffold.</div>
+            <div class="optimizer-lane-row" id="optimizerLaneControls" hidden>
+              <span class="optimizer-lane-label">Codieverse Algorithme</span>
+              <div class="optimizer-lane-switch">
+                <button class="optimizer-lane-btn active" type="button" data-lane="INTERACTIVE">Interactive</button>
+                <button class="optimizer-lane-btn" type="button" data-lane="DEEP">Deep</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Shell Badges -->
+          <div class="shell-badges" id="shellBadges"></div>
+
+          <!-- Console Box -->
+          <div class="console-box" id="display"></div>
+
+          <!-- Overlay Panels -->
+          <div class="overlay-panel" id="commandHelpPanel" hidden>
+            <div class="overlay-panel-header">
+              <strong>Command Help</strong>
+              <button class="panel-close-btn" id="commandHelpCloseBtn" type="button">&times;</button>
+            </div>
+            <div class="overlay-panel-body" id="commandHelpBody"></div>
+          </div>
+
+          <div class="overlay-panel" id="workbenchPanel" hidden>
+            <div class="overlay-panel-header">
+              <strong>Workbench</strong>
+              <button class="panel-close-btn" id="workbenchCloseBtn" type="button">&times;</button>
+            </div>
+            <div class="overlay-panel-body" id="workbenchBody">
+              <div class="workbench-empty">Recent runs and compare actions will appear here as the workspace history fills up.</div>
+            </div>
+          </div>
+
+          <div class="slash-palette" id="slashPalette" hidden></div>
+
+          <!-- Suggestion Panel -->
+          <div class="suggestion-panel" id="suggestionPanel" hidden>
+            <div class="suggestion-chip-row" id="suggestionChips"></div>
+            <div class="suggestion-copy" id="suggestionCopy"></div>
+          </div>
+
+          <!-- Command Bar -->
+          <div class="command-bar">
+            <input type="text" id="cmdInput" class="cmd-input" placeholder="Masukkan prompt atau command..." autofocus autocomplete="off">
+            <button class="secondary-btn" id="clearBtn">CLR</button>
+            <button class="action-btn" id="runBtn">EXEC</button>
+            <button class="secondary-btn" id="copyLastBtn" disabled>COPY</button>
+          </div>
+
+          <!-- Footer -->
+          <div class="footer">
+            <div class="footer-row">
+              <div class="footer-left">Sentra Prompt Console</div>
+              <div class="footer-right">
+                <div class="footer-metric">Electron Shell</div>
+                <div class="footer-metric">Transform + Optimizer</div>
+              </div>
+            </div>
+            <div class="footer-hud" id="systemHud">
+              <div class="hud-item">
+                <span class="hud-label">SoC Temp</span>
+                <span class="hud-value" id="hudTemp">42&deg;C</span>
+                <div class="hud-bar"><div class="hud-bar-fill temp" id="hudTempBar" style="width:35%"></div></div>
+              </div>
+              <div class="hud-item">
+                <span class="hud-label">CPU Load</span>
+                <span class="hud-value" id="hudLoad">12%</span>
+                <div class="hud-bar"><div class="hud-bar-fill load" id="hudLoadBar" style="width:12%"></div></div>
+              </div>
+              <div class="hud-item">
+                <span class="hud-label">Memory</span>
+                <span class="hud-value" id="hudMem">4.2 / 32 GB</span>
+              </div>
+              <div class="hud-item">
+                <span class="hud-label">Uptime</span>
+                <span class="hud-value" id="hudUptime">00:00:00</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feet & Ports -->
+    <div class="console-feet">
+      <div class="foot foot-left"></div>
+      <div class="foot foot-right"></div>
+    </div>
+    <div class="rear-ports">
+      <div class="port"></div><div class="port"></div>
+      <div class="port wide"></div><div class="port"></div>
+      <div class="port wide"></div><div class="port"></div><div class="port"></div>
+    </div>
+  </div>  <script src="./renderer.js"></script></body>
+</html>
