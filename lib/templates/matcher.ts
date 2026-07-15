@@ -55,12 +55,45 @@ function expandWithSynonyms(tokens: string[]): Set<string> {
   return expanded
 }
 
+interface CachedTemplateData {
+  slugTokens: string[]
+  nameTokens: string[]
+  descriptionTokens: string[]
+  normalizedName: string
+}
+
+const templateDataCache = new Map<string, CachedTemplateData>()
+
+function getCachedTemplateData(template: TemplateDefinition): CachedTemplateData {
+  let data = templateDataCache.get(template.slug)
+  if (!data) {
+    const slugTokens = template.slug.split('-')
+      .map(normalizeWord)
+      .filter((w) => w.length > 3)
+
+    const nameTokens = template.name.toLowerCase().split(/\s+/)
+      .map(normalizeWord)
+      .filter((w) => w.length > 3)
+
+    const descriptionTokens = template.description.toLowerCase().split(/\s+/)
+      .map(normalizeWord)
+      .filter((w) => w.length > 3)
+
+    const normalizedName = normalizePhrase(template.name)
+
+    data = { slugTokens, nameTokens, descriptionTokens, normalizedName }
+    templateDataCache.set(template.slug, data)
+  }
+  return data
+}
+
 // Module-level cache so template embeddings are computed once per process.
 const _templateEmbeddingCache = new Map<string, number[]>()
 
 // Exported for test isolation only — clears in-process cache between test runs.
 export function _clearEmbeddingCacheForTest(): void {
   _templateEmbeddingCache.clear()
+  templateDataCache.clear()
 }
 
 const TASK_TO_CATEGORY: Record<TaskType, string> = {
@@ -98,20 +131,20 @@ function scoreTemplate(
   normalizedIdea: string
 ): number {
   let score = 0
-  for (const word of template.slug.split('-')) {
-    const w = normalizeWord(word)
-    if (w.length > 3 && ideaTokens.has(w)) score += 3
+  const data = getCachedTemplateData(template)
+
+  for (const w of data.slugTokens) {
+    if (ideaTokens.has(w)) score += 3
   }
-  for (const word of template.name.toLowerCase().split(/\s+/)) {
-    const w = normalizeWord(word)
-    if (w.length > 3 && ideaTokens.has(w)) score += 2
+  for (const w of data.nameTokens) {
+    if (ideaTokens.has(w)) score += 2
   }
-  for (const word of template.description.toLowerCase().split(/\s+/)) {
-    const w = normalizeWord(word)
-    if (w.length > 3 && ideaTokens.has(w)) score += 1
+  for (const w of data.descriptionTokens) {
+    if (ideaTokens.has(w)) score += 1
   }
-  const tName = normalizePhrase(template.name)
-  if (tName.length > 8 && normalizedIdea.includes(tName)) score += 4
+  if (data.normalizedName.length > 8 && normalizedIdea.includes(data.normalizedName)) {
+    score += 4
+  }
   return score
 }
 
