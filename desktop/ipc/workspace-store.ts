@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { existsSync } from 'node:fs'
 import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
@@ -35,9 +36,7 @@ export function createWorkspaceStore(filePath: string) {
   let mutationChain = Promise.resolve()
 
   function buildTempFilePath() {
-    return `${filePath}.${process.pid}.${Date.now()}.${Math.random()
-      .toString(16)
-      .slice(2)}.tmp`
+    return `${filePath}.${process.pid}.${Date.now()}.${randomUUID()}.tmp`
   }
 
   function serializeMutation<T>(operation: () => Promise<T>) {
