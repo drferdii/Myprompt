@@ -124,31 +124,49 @@ export async function processEmailQueue(
     skipped: 0,
   }
 
-  for (const job of dueJobs) {
-    const claimed = await prisma.emailJob.updateMany({
-      where: {
-        id: job.id,
-        status: {
-          in: ['PENDING', 'RETRYING'],
-        },
-      },
-      data: {
-        status: 'PROCESSING',
-        attempts: {
-          increment: 1,
-        },
-        lastAttemptAt: now,
-        lastError: null,
-      },
-    })
+  if (dueJobs.length === 0) {
+    return summary
+  }
 
-    if (claimed.count === 0) {
-      summary.skipped += 1
-      continue
-    }
+  const jobIds = dueJobs.map((job) => job.id)
 
+  // Batch claim all due jobs to minimize database roundtrips and eliminate N+1 claim queries
+  await prisma.emailJob.updateMany({
+    where: {
+      id: {
+        in: jobIds,
+      },
+      status: {
+        in: ['PENDING', 'RETRYING'],
+      },
+    },
+    data: {
+      status: 'PROCESSING',
+      attempts: {
+        increment: 1,
+      },
+      lastAttemptAt: now,
+      lastError: null,
+    },
+  })
+
+  // Fetch the successfully claimed jobs to process them.
+  // We filter on lastAttemptAt to guarantee we only retrieve jobs successfully claimed in this run.
+  const claimedJobs = await prisma.emailJob.findMany({
+    where: {
+      id: {
+        in: jobIds,
+      },
+      status: 'PROCESSING',
+      lastAttemptAt: now,
+    },
+  })
+
+  summary.skipped = dueJobs.length - claimedJobs.length
+
+  for (const job of claimedJobs) {
     summary.claimed += 1
-    const attemptNumber = job.attempts + 1
+    const attemptNumber = job.attempts // attempts has already been incremented in the batch update
 
     try {
       await deliverEmailJob({

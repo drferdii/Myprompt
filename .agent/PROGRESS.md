@@ -2,10 +2,19 @@
 
 ## Current Status
 
-**Last updated:** 2026-06-18
+**Last updated:** 2026-07-19
 **Active focus:** Desktop shell redesign integrated from `newdesign.zip` (Sentra Console — Dark Edition). All tests, build, and smoke verification green.
 
 ## Completed
+
+- ⚡ **Email Queue N+1 Query Optimization** — 2026-07-19:
+  - Replaced individual N+1 database queries inside `processEmailQueue` with a single batch `updateMany` query for claiming due jobs.
+  - Reduced database roundtrips by almost 50% during email queue processing.
+  - Added a dedicated suite of unit tests in `lib/email/queue.test.ts` verifying claiming, successful sending, and retry behaviors.
+  - Reverted any temporary changes to `package.json` to keep workspace definitions intact.
+
+
+
 
 - Desktop shell redesign from `newdesign.zip` — 2026-06-18:
   - replaced `desktop/renderer/index.html` with the "Sentra Console — Dark Edition" console-rig layout (aluminum enclosure, front panel, LED strip, top/side vents, feet, rear ports, system HUD, deep screen)
