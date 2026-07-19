@@ -7,6 +7,12 @@
 
 ## Completed
 
+- cosineSimilarity unit tests — 2026-07-19:
+  - created `lib/embeddings/similarity.test.ts` to fully test the cosine similarity computation
+  - covered happy paths (identical, opposite, orthogonal, arbitrary vectors)
+  - covered edge cases (zero vectors, empty vectors, mismatched length vectors with length minimum guard)
+  - verified 15/15 tests passing successfully
+
 - Desktop shell redesign from `newdesign.zip` — 2026-06-18:
   - replaced `desktop/renderer/index.html` with the "Sentra Console — Dark Edition" console-rig layout (aluminum enclosure, front panel, LED strip, top/side vents, feet, rear ports, system HUD, deep screen)
   - extracted CSS from `newdesign.zip` into `desktop/renderer/index.css` and linked it externally
