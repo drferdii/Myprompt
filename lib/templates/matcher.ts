@@ -64,6 +64,14 @@ interface CachedTemplateData {
 
 const templateDataCache = new Map<string, CachedTemplateData>()
 
+function warmTemplateDataCache(): void {
+  if (templateDataCache.size === 0 && allTemplates.length > 0) {
+    for (const template of allTemplates) {
+      getCachedTemplateData(template)
+    }
+  }
+}
+
 function getCachedTemplateData(template: TemplateDefinition): CachedTemplateData {
   let data = templateDataCache.get(template.slug)
   if (!data) {
@@ -89,10 +97,12 @@ function getCachedTemplateData(template: TemplateDefinition): CachedTemplateData
 
 // Module-level cache so template embeddings are computed once per process.
 const _templateEmbeddingCache = new Map<string, number[]>()
+const _templateNormCache = new Map<string, number>()
 
 // Exported for test isolation only — clears in-process cache between test runs.
 export function _clearEmbeddingCacheForTest(): void {
   _templateEmbeddingCache.clear()
+  _templateNormCache.clear()
   templateDataCache.clear()
 }
 
@@ -112,6 +122,7 @@ export function matchTemplate(
   rawIdea: string,
   taskType: TaskType
 ): TemplateDefinition | undefined {
+  warmTemplateDataCache()
   const category = TASK_TO_CATEGORY[taskType]
 
   // If task type maps to a category, find best match within that category
@@ -186,6 +197,7 @@ export async function matchTemplateWithEmbeddings(
   rawIdea: string,
   taskType: TaskType
 ): Promise<TemplateDefinition | undefined> {
+  warmTemplateDataCache()
   const category = TASK_TO_CATEGORY[taskType]
   const candidates: readonly TemplateDefinition[] =
     category && category in templatesByCategory
@@ -206,13 +218,28 @@ export async function matchTemplateWithEmbeddings(
     const ideaTokens = expandWithSynonyms(tokenize(rawIdea.toLowerCase()))
     const normalizedIdea = normalizePhrase(rawIdea.toLowerCase())
 
+    const queryNorm = Math.sqrt(queryEmbedding.reduce((sum, val) => sum + val * val, 0))
+
+    // Pre-calculate or fetch template norms from cache
+    const templateNorms: number[] = []
+    for (let i = 0; i < candidates.length; i++) {
+      const slug = candidates[i].slug
+      let norm = _templateNormCache.get(slug)
+      if (norm === undefined) {
+        const emb = templateEmbeddings[i]
+        norm = Math.sqrt(emb.reduce((sum, val) => sum + val * val, 0))
+        _templateNormCache.set(slug, norm)
+      }
+      templateNorms.push(norm)
+    }
+
     for (let i = 0; i < candidates.length; i++) {
       const template = candidates[i]
 
       const kScore = scoreTemplate(template, ideaTokens, normalizedIdea)
       if (kScore > bestKeywordScore) { bestKeywordScore = kScore; bestKeyword = template }
 
-      const sScore = cosineSimilarity(queryEmbedding, templateEmbeddings[i])
+      const sScore = cosineSimilarity(queryEmbedding, templateEmbeddings[i], queryNorm, templateNorms[i])
       if (sScore > bestSemanticScore) { bestSemanticScore = sScore; bestSemantic = template }
     }
 
