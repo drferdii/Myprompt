@@ -7,6 +7,11 @@
 
 ## Completed
 
+- Tested getScoreLabel boundaries in `lib/evaluator/scoring.ts` — 2026-07-19:
+  - wrote comprehensive unit tests in `lib/evaluator/scoring.test.ts` covering all boundary values (9, 7, 5, 3) and decimal/range edge cases for `getScoreLabel`
+  - added full unit tests for other utility functions in the same file: `calculateOverallScore`, `normalizeScores`, and `getScoreColor`
+  - verified that all 22 tests pass cleanly
+
 - Desktop shell redesign from `newdesign.zip` — 2026-06-18:
   - replaced `desktop/renderer/index.html` with the "Sentra Console — Dark Edition" console-rig layout (aluminum enclosure, front panel, LED strip, top/side vents, feet, rear ports, system HUD, deep screen)
   - extracted CSS from `newdesign.zip` into `desktop/renderer/index.css` and linked it externally
