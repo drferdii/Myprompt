@@ -687,7 +687,14 @@ function renderShellBadges(
 }
 
 function buildCatalogItemMarkup(slash: string, summary: string) {
-  return `<strong>${slash}</strong><span>${summary}</span>`
+  const fragment = document.createDocumentFragment()
+  const strong = document.createElement("strong")
+  strong.textContent = slash
+  const span = document.createElement("span")
+  span.textContent = summary
+  fragment.appendChild(strong)
+  fragment.appendChild(span)
+  return fragment
 }
 
 function filterCommandCatalog(query: string) {
@@ -726,7 +733,7 @@ function renderSlashPalette(query: string) {
     const button = document.createElement('button')
     button.className = 'catalog-item'
     button.type = 'button'
-    button.innerHTML = buildCatalogItemMarkup(item.slash, item.summary)
+    button.appendChild(buildCatalogItemMarkup(item.slash, item.summary))
     button.addEventListener('click', () => {
       if (!input) {
         return
@@ -759,7 +766,7 @@ function renderCommandHelpPanel(query: string) {
     const button = document.createElement('button')
     button.className = 'catalog-item'
     button.type = 'button'
-    button.innerHTML = buildCatalogItemMarkup(item.slash, item.summary)
+    button.appendChild(buildCatalogItemMarkup(item.slash, item.summary))
     button.addEventListener('click', () => {
       if (!input) {
         return
@@ -953,10 +960,10 @@ async function openWorkbenchPanel() {
     for (const group of compareGroups) {
       const summary = document.createElement('div')
       summary.className = 'catalog-item'
-      summary.innerHTML = buildCatalogItemMarkup(
+      summary.appendChild(buildCatalogItemMarkup(
         'COMPARE READY · Transform + Optimizer',
         group[0]?.rawInput.slice(0, 120) ?? ''
-      )
+      ))
       workbenchBody.appendChild(summary)
     }
   }
@@ -970,10 +977,10 @@ async function openWorkbenchPanel() {
     for (const record of recentRuns.slice(0, 8)) {
       const card = document.createElement('div')
       card.className = 'catalog-item'
-      card.innerHTML = buildCatalogItemMarkup(
+      card.appendChild(buildCatalogItemMarkup(
         `${record.sourceMode.toUpperCase()} · ${record.id}`,
         record.rawInput.slice(0, 120)
-      )
+      ))
 
       const actionRow = document.createElement('div')
       actionRow.className = 'output-action-row'
@@ -995,19 +1002,19 @@ async function openWorkbenchPanel() {
   if (benchmarks.length > 0) {
     const benchmarkHeader = document.createElement('div')
     benchmarkHeader.className = 'catalog-item'
-    benchmarkHeader.innerHTML = buildCatalogItemMarkup(
+    benchmarkHeader.appendChild(buildCatalogItemMarkup(
       'BENCHMARKS',
       'Saved canonical prompts for acceptance comparison.'
-    )
+    ))
     workbenchBody.appendChild(benchmarkHeader)
 
     for (const record of benchmarks.slice(0, 8)) {
       const card = document.createElement('div')
       card.className = 'catalog-item'
-      card.innerHTML = buildCatalogItemMarkup(
+      card.appendChild(buildCatalogItemMarkup(
         `${record.id} · ${record.lanes.join(' + ')}`,
         record.title
-      )
+      ))
 
       const actionRow = document.createElement('div')
       actionRow.className = 'output-action-row'

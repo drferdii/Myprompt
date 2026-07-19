@@ -4,15 +4,37 @@ import { prisma } from '@/lib/db/prisma'
 import { generateEmbedding } from './generator'
 import type { PromptRecord } from '@/types'
 
-export function cosineSimilarity(a: number[], b: number[]): number {
+export function cosineSimilarity(
+  a: number[],
+  b: number[],
+  normA?: number,
+  normB?: number
+): number {
   const len = Math.min(a.length, b.length)
-  let dot = 0, normA = 0, normB = 0
+  let dot = 0
   for (let i = 0; i < len; i++) {
     dot += a[i] * b[i]
-    normA += a[i] * a[i]
-    normB += b[i] * b[i]
   }
-  const denom = Math.sqrt(normA) * Math.sqrt(normB)
+
+  let nA = normA
+  if (nA === undefined) {
+    let sumA = 0
+    for (let i = 0; i < len; i++) {
+      sumA += a[i] * a[i]
+    }
+    nA = Math.sqrt(sumA)
+  }
+
+  let nB = normB
+  if (nB === undefined) {
+    let sumB = 0
+    for (let i = 0; i < len; i++) {
+      sumB += b[i] * b[i]
+    }
+    nB = Math.sqrt(sumB)
+  }
+
+  const denom = nA * nB
   return denom === 0 ? 0 : dot / denom
 }
 

@@ -21,7 +21,8 @@ export function encrypt(plaintext: string): {
   authTag: string
 } {
   const key = getEncryptionKey()
-  const iv = randomBytes(16)
+  // ✅ SECURE: Use 12-byte (96-bit) IV as recommended by NIST SP 800-38D for AES-GCM
+  const iv = randomBytes(12)
   const cipher = createCipheriv(ALGORITHM, key, iv)
 
   let encrypted = cipher.update(plaintext, 'utf8', 'hex')
@@ -36,11 +37,17 @@ export function encrypt(plaintext: string): {
 }
 
 export function decrypt(encrypted: string, iv: string, authTag: string): string {
-  const key = getEncryptionKey()
-  const decipher = createDecipheriv(ALGORITHM, key, Buffer.from(iv, 'hex'))
-  decipher.setAuthTag(Buffer.from(authTag, 'hex'))
+  try {
+    const key = getEncryptionKey()
+    const decipher = createDecipheriv(ALGORITHM, key, Buffer.from(iv, 'hex'))
+    decipher.setAuthTag(Buffer.from(authTag, 'hex'))
 
-  let decrypted = decipher.update(encrypted, 'hex', 'utf8')
-  decrypted += decipher.final('utf8')
-  return decrypted
+    let decrypted = decipher.update(encrypted, 'hex', 'utf8')
+    decrypted += decipher.final('utf8')
+    return decrypted
+  } catch {
+    // ✅ SECURE: Catch decryption failures (corrupt/malformed ciphertext, bad IV/tag, key mismatch)
+    // and fail securely with a generic, safe error message without leaking internal stack traces.
+    throw new Error('Decryption failed: Integrity check failed or invalid payload')
+  }
 }

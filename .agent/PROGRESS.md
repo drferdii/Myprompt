@@ -10,10 +10,13 @@
 - ⚡ **Email Queue N+1 Query Optimization** — 2026-07-19:
   - Replaced individual N+1 database queries inside `processEmailQueue` with a single batch `updateMany` query for claiming due jobs.
   - Reduced database roundtrips by almost 50% during email queue processing.
-  - Added a dedicated suite of unit tests in `lib/email/queue.test.ts` verifying claiming, successful sending, and retry behaviors.
-  - Reverted any temporary changes to `package.json` to keep workspace definitions intact.
+  - Added a dedicated suite of unit tests in `lib/email/queue.test.ts` verifying claiming, successful sending, retry, and concurrent-claim skip behaviors.
 
-
+- cosineSimilarity unit tests — 2026-07-19:
+  - created `lib/embeddings/similarity.test.ts` to fully test the cosine similarity computation
+  - covered happy paths (identical, opposite, orthogonal, arbitrary vectors)
+  - covered edge cases (zero vectors, empty vectors, mismatched length vectors with length minimum guard)
+  - verified 15/15 tests passing successfully
 
 
 - Desktop shell redesign from `newdesign.zip` — 2026-06-18:

@@ -179,6 +179,45 @@ describe('processEmailQueue', () => {
     })
   })
 
+  it('should skip jobs that another worker already claimed', async () => {
+    const mockNow = new Date()
+    const mockJobs = [
+      {
+        id: 'job-race',
+        type: 'WELCOME' as const,
+        toEmail: 'race@example.com',
+        payload: { name: 'Dana' },
+        status: 'PENDING' as const,
+        attempts: 0,
+        maxAttempts: 5,
+        nextAttemptAt: mockNow,
+        lastAttemptAt: null,
+        sentAt: null,
+        lastError: null,
+        idempotencyKey: null,
+        createdAt: mockNow,
+        updatedAt: mockNow,
+      },
+    ]
+
+    vi.mocked(prisma.emailJob.findMany).mockResolvedValueOnce(mockJobs)
+    // Batch claim matches zero rows — another worker won the race.
+    vi.mocked(prisma.emailJob.updateMany).mockResolvedValueOnce({ count: 0 })
+    vi.mocked(prisma.emailJob.findMany).mockResolvedValueOnce([])
+
+    const result = await processEmailQueue({ now: mockNow })
+
+    expect(result).toEqual({
+      claimed: 0,
+      sent: 0,
+      failed: 0,
+      retried: 0,
+      skipped: 1,
+    })
+    expect(sendWelcomeEmail).not.toHaveBeenCalled()
+    expect(prisma.emailJob.update).not.toHaveBeenCalled()
+  })
+
   it('should handle delivery failure and mark as FAILED if attempts >= maxAttempts', async () => {
     const mockNow = new Date()
     const mockJobs = [
