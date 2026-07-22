@@ -300,8 +300,10 @@ const clearBtn = document.getElementById('clearBtn') as HTMLButtonElement | null
 const runBtn = document.getElementById('runBtn') as HTMLButtonElement | null
 const copyLastBtn = document.getElementById('copyLastBtn') as HTMLButtonElement | null
 const miniToggleBtn = document.getElementById('miniToggleBtn') as HTMLButtonElement | null
+const powerBtn = document.getElementById('powerBtn') as HTMLButtonElement | null
 const consoleRig = document.getElementById('consoleRig') as HTMLElement | null
 const miniWidget = document.getElementById('miniWidget') as HTMLElement | null
+const miniBar = document.getElementById('miniBar') as HTMLElement | null
 const miniPanel = document.getElementById('miniPanel') as HTMLElement | null
 const mCollapseBtn = document.getElementById('mCollapseBtn') as HTMLButtonElement | null
 const mTransformBtn = document.getElementById('mTransformBtn') as HTMLButtonElement | null
@@ -326,6 +328,9 @@ let currentMode: DesktopPrimaryModeId = 'transform'
 let currentOptimizerLane: DesktopOptimizeLane = 'INTERACTIVE'
 let currentProvider: DesktopLLMProvider = 'GROK'
 let currentModelLabel = 'grok-3-fast'
+type WidgetState = 'full' | 'minimized'
+
+let widgetState: WidgetState = 'full'
 let isExecuting = false
 let lastRunRecord: DesktopRunRecord | null = null
 let lastCopyText = ''
@@ -2580,6 +2585,7 @@ for (const button of optimizerLaneButtons) {
 }
 
 closeBtn?.addEventListener('click', () => desktopWindow.sentraDesktop?.close?.())
+powerBtn?.addEventListener('click', () => desktopWindow.sentraDesktop?.close?.())
 clearBtn?.addEventListener('click', () => {
   if (display) {
     resetConsoleView(display, currentMode)
@@ -2613,30 +2619,34 @@ copyLastBtn?.addEventListener('click', () => {
 function enterMiniMode() {
   if (!consoleRig || !miniWidget || !miniPanel) return
   const desktop = (window as DesktopWindow).sentraDesktop
+  widgetState = 'minimized'
   consoleRig.setAttribute('hidden', '')
   miniWidget.removeAttribute('hidden')
-  miniPanel.removeAttribute('hidden')
-  miniPanel.classList.add('open')
-  updateMiniPanel()
-  if (mDisplay) {
-    resetConsoleView(mDisplay, currentMode)
-  }
-  void desktop?.invoke?.('desktop:toggle-mini', { mode: 'expanded' })
-  mCmdInput?.focus()
+  miniPanel.setAttribute('hidden', '')
+  miniPanel.classList.remove('open')
+  void desktop?.invoke?.('desktop:toggle-mini', { mode: 'minimized' })
 }
 
 function exitMiniMode() {
   if (!consoleRig || !miniWidget || !miniPanel) return
   const desktop = (window as DesktopWindow).sentraDesktop
+  widgetState = 'full'
   miniWidget.setAttribute('hidden', '')
   miniPanel.setAttribute('hidden', '')
   miniPanel.classList.remove('open')
   consoleRig.removeAttribute('hidden')
+  // Reset native drag position if needed
   void desktop?.invoke?.('desktop:toggle-mini', { mode: 'normal' })
   input?.focus()
 }
 
 miniToggleBtn?.addEventListener('click', () => enterMiniMode())
+miniBar?.addEventListener('click', (e) => {
+  if (widgetState === 'minimized' && !dragDetected) {
+    e.stopPropagation()
+    exitMiniMode()
+  }
+})
 mCollapseBtn?.addEventListener('click', () => exitMiniMode())
 
 commandHelpCloseBtn?.addEventListener('click', () => {
@@ -2689,30 +2699,57 @@ if (shell && display) {
 }
 void loadShellState()
 
-// JS window drag — replaces -webkit-app-region: drag
 const NODRAG_SELECTOR =
-  'button, input, a, select, textarea, .console-box, .command-bar, .mode-bar, .status-panel, .suggestion-panel, .overlay-panel, .slash-palette, .shell-badges, .footer'
-let dragStart: { mx: number; my: number; wx: number; wy: number } | null = null
+  'button, input, a, select, textarea, [contenteditable="true"], .console-box, .mini-console, .overlay-panel, .slash-palette, .suggestion-panel'
 
-consoleRig?.addEventListener('mousedown', (e) => {
-  const target = e.target as HTMLElement
-  if (target.closest(NODRAG_SELECTOR)) return
-  const mx = e.screenX
-  const my = e.screenY
-  void desktopWindow.sentraDesktop?.getWindowPos?.().then((pos) => {
-    if (!pos) return
-    dragStart = { mx, my, wx: pos[0], wy: pos[1] }
-  })
+let dragStart: { mx: number; my: number; wx: number; wy: number } | null = null
+let dragAttempt = 0
+let dragDetected = false
+
+function cancelDrag() {
+  dragAttempt += 1
+  dragStart = null
+}
+
+document.addEventListener('mousedown', async (event) => {
+  if (event.button !== 0 || !(event.target instanceof HTMLElement)) return
+
+  const dragSurface = widgetState === 'full' ? consoleRig : miniWidget
+  if (!dragSurface || dragSurface.hidden || !dragSurface.contains(event.target)) return
+  if (event.target.closest(NODRAG_SELECTOR)) return
+
+  if (widgetState === 'minimized') {
+    dragDetected = false
+  }
+
+  const attempt = ++dragAttempt
+  const pos = await desktopWindow.sentraDesktop?.getWindowPos?.()
+  if (attempt !== dragAttempt || !pos) return
+
+  dragStart = { mx: event.screenX, my: event.screenY, wx: pos[0], wy: pos[1] }
 })
 
-document.addEventListener('mousemove', (e) => {
+document.addEventListener('mousemove', (event) => {
   if (!dragStart) return
+  if ((event.buttons & 1) === 0) {
+    cancelDrag()
+    return
+  }
+
+  if (
+    widgetState === 'minimized' &&
+    (Math.abs(event.screenX - dragStart.mx) > 3 || Math.abs(event.screenY - dragStart.my) > 3)
+  ) {
+    dragDetected = true
+  }
+
   desktopWindow.sentraDesktop?.setWindowPos?.(
-    dragStart.wx + e.screenX - dragStart.mx,
-    dragStart.wy + e.screenY - dragStart.my
+    dragStart.wx + (event.screenX - dragStart.mx),
+    dragStart.wy + (event.screenY - dragStart.my)
   )
 })
 
-document.addEventListener('mouseup', () => {
-  dragStart = null
-})
+document.addEventListener('mouseup', cancelDrag)
+window.addEventListener('blur', cancelDrag)
+
+export {}

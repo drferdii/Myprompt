@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { parseEnv } from 'node:util'
 
@@ -248,7 +248,22 @@ function appendDesktopEnvWarning() {
 
 const DEFAULT_WINDOW = { width: 460, height: 620, x: 0, y: 0 }
 
+function resolveWindowStatePath() {
+  const baseDir = app.getPath('userData')
+  return path.join(baseDir, 'sentra-desktop-window-state.json')
+}
+
 function loadWindowState(): typeof DEFAULT_WINDOW {
+  const statePath = resolveWindowStatePath()
+  if (existsSync(statePath)) {
+    try {
+      const content = readFileSync(statePath, 'utf8')
+      const saved = JSON.parse(content)
+      return { ...DEFAULT_WINDOW, ...saved }
+    } catch {
+      // fall through to default
+    }
+  }
   // Position at top-right of primary display
   try {
     const primaryDisplay = screen.getPrimaryDisplay()
@@ -256,6 +271,15 @@ function loadWindowState(): typeof DEFAULT_WINDOW {
     return { width: 460, height: 620, x: screenW - 460 - 20, y: 20 }
   } catch {
     return { ...DEFAULT_WINDOW }
+  }
+}
+
+function saveWindowState(bounds: { x: number; y: number; width: number; height: number }) {
+  const statePath = resolveWindowStatePath()
+  try {
+    writeFileSync(statePath, JSON.stringify(bounds))
+  } catch {
+    // ignore
   }
 }
 
@@ -312,7 +336,7 @@ function createWindow() {
   })
 
   mainWindow.on('close', () => {
-    // No saved window state; initial load always resets to the default position.
+    if (mainWindow) saveWindowState(mainWindow.getBounds())
   })
 }
 
@@ -342,25 +366,27 @@ app.whenReady().then(() => {
   ipcMain.on('window:set-pos', (_event, { x, y }: { x: number; y: number }) => {
     mainWindow?.setPosition(Math.round(x), Math.round(y))
   })
-
   ipcMain.handle('desktop:toggle-mini', (_event, payload) => {
     if (!mainWindow || isSmokeMode) return
-    const { mode } = payload as { mode?: 'expanded' | 'normal' }
+    const { mode } = payload as { mode?: 'expanded' | 'minimized' | 'normal' }
     const primaryDisplay = screen.getPrimaryDisplay()
-    const { width } = primaryDisplay.workAreaSize
+    const { width: screenW, height: screenH } = primaryDisplay.workAreaSize
+    const currentBounds = mainWindow.getBounds()
 
     if (mode === 'expanded') {
       const panelWidth = 452
       const panelHeight = 612
-      mainWindow.setBounds({
-        x: width - panelWidth - 16,
-        y: 16,
-        width: panelWidth,
-        height: panelHeight,
-      })
+      // Keep current X/Y if valid, otherwise default to top-right
+      const x =
+        currentBounds.x >= 0 && currentBounds.x + panelWidth <= screenW
+          ? currentBounds.x
+          : screenW - panelWidth - 16
+      const y =
+        currentBounds.y >= 0 && currentBounds.y + panelHeight <= screenH ? currentBounds.y : 16
+      mainWindow.setBounds({ x, y, width: panelWidth, height: panelHeight })
     } else {
-      const { width: sw } = primaryDisplay.workAreaSize
-      mainWindow.setBounds({ x: sw - 460 - 20, y: 20, width: 460, height: 620 })
+      // Restore normal size, keep position
+      mainWindow.setBounds({ x: currentBounds.x, y: currentBounds.y, width: 460, height: 620 })
     }
   })
 
