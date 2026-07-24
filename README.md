@@ -7,7 +7,7 @@
 <table width="100%">
 <tr>
 <td width="28%" align="center" style="vertical-align:middle;">
-<img src="https://i.postimg.cc/52CKHcQV/prompt.png" alt="Myprompt" width="320">
+<img src="https://i.ibb.co.com/Ps5TZPYN/Prompt.png" alt="Myprompt" width="320">
 </td>
 <td width="72%" style="vertical-align:middle;">
 
@@ -385,7 +385,7 @@ rigor doesn't get lost going from English to Indonesian:
 `PERAN (Role) · TUGAS (Task) · KONTEKS (Context) · PENDEKATAN (Approach) · BATASAN (Constraints) · FORMAT KELUARAN (Output Format)`
 
 <p align="center">
-<img src="https://i.postimg.cc/mrmqQYjg/prompt.png" alt="Myprompt — Bahasa Indonesia native prompting" width="700">
+<img src="https://i.ibb.co.com/Ps5TZPYN/Prompt.png" alt="Myprompt — Bahasa Indonesia native prompting" width="700">
 </p>
 
 **Use case:** tim klinis, akademik, atau korporat di Indonesia yang menulis
