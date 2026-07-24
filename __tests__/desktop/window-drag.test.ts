@@ -30,6 +30,7 @@ function createDesktopBridge() {
     onStream: vi.fn(),
     offStream: vi.fn(),
     close: vi.fn(),
+    minimize: vi.fn(),
     getWindowPos: vi.fn().mockResolvedValue([100, 200]),
     setWindowPos: vi.fn(),
   }
@@ -106,40 +107,30 @@ describe('native window dragging', () => {
     document.dispatchEvent(mouseEvent('mouseup', 120, 230))
   })
 
-  it('moves the native window without expanding when dragging the minimized widget bar', async () => {
-    document.querySelector<HTMLButtonElement>('#miniToggleBtn')?.click()
-    const miniBar = document.querySelector<HTMLElement>('#miniBar')
-    const miniPanel = document.querySelector<HTMLElement>('#miniPanel')
-    expect(miniBar).not.toBeNull()
-    expect(miniPanel?.hidden).toBe(true)
+  it('moves the native window when dragging the card header', async () => {
+    const cardHeader = document.querySelector<HTMLElement>('.card-header')
+    expect(cardHeader).not.toBeNull()
 
-    miniBar?.dispatchEvent(mouseEvent('mousedown', 300, 400, 1))
+    cardHeader?.dispatchEvent(mouseEvent('mousedown', 300, 400, 1))
     await settleDragStart()
     document.dispatchEvent(mouseEvent('mousemove', 320, 440, 1))
     document.dispatchEvent(mouseEvent('mouseup', 320, 440))
-    miniBar?.dispatchEvent(mouseEvent('click', 320, 440))
 
     expect(bridge.setWindowPos).toHaveBeenCalledTimes(1)
     expect(bridge.setWindowPos).toHaveBeenLastCalledWith(120, 240)
-    expect(miniPanel?.hidden).toBe(true)
   })
 
-  it('restores the full console after a simple mini-bar click', async () => {
-    document.querySelector<HTMLButtonElement>('#miniToggleBtn')?.click()
+  it('minimizes the native window from the header minimize button', () => {
     const consoleRig = document.querySelector<HTMLElement>('#consoleRig')
     const miniWidget = document.querySelector<HTMLElement>('#miniWidget')
-    const miniBar = document.querySelector<HTMLElement>('#miniBar')
-    const miniPanel = document.querySelector<HTMLElement>('#miniPanel')
 
-    miniBar?.dispatchEvent(mouseEvent('mousedown', 300, 400, 1))
-    await settleDragStart()
-    miniBar?.dispatchEvent(mouseEvent('mouseup', 300, 400))
-    miniBar?.dispatchEvent(mouseEvent('click', 300, 400))
+    document.querySelector<HTMLButtonElement>('#miniToggleBtn')?.click()
 
+    expect(bridge.minimize).toHaveBeenCalledOnce()
+    // The shell must stay in full mode: minimize is an OS-level action, not a widget swap.
     expect(consoleRig?.hidden).toBe(false)
     expect(miniWidget?.hidden).toBe(true)
-    expect(miniPanel?.hidden).toBe(true)
-    expect(bridge.invoke).toHaveBeenLastCalledWith('desktop:toggle-mini', { mode: 'normal' })
+    expect(bridge.invoke).not.toHaveBeenCalledWith('desktop:toggle-mini', expect.anything())
   })
 
   it('does not initiate a drag from an interactive descendant', async () => {

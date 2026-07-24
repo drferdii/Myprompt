@@ -1,4 +1,5 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
+import os from 'node:os'
 import path from 'node:path'
 import { parseEnv } from 'node:util'
 
@@ -208,7 +209,7 @@ async function buildShellBadges(
   if (!session?.access_token) {
     badges.push({
       id: 'guest',
-      label: 'Guest',
+      label: 'FTDRᵢ(t,h)',
       tone: 'muted',
     })
   }
@@ -246,7 +247,11 @@ function appendDesktopEnvWarning() {
   )
 }
 
-const DEFAULT_WINDOW = { width: 460, height: 620, x: 0, y: 0 }
+const DEFAULT_WINDOW = { width: 420, height: 580, x: 0, y: 0 }
+
+// Bumped whenever the default shell size changes, so a persisted size from an older
+// layout is discarded instead of pinning the window to the previous dimensions.
+const WINDOW_STATE_VERSION = 2
 
 function resolveWindowStatePath() {
   const baseDir = app.getPath('userData')
@@ -259,7 +264,14 @@ function loadWindowState(): typeof DEFAULT_WINDOW {
     try {
       const content = readFileSync(statePath, 'utf8')
       const saved = JSON.parse(content)
-      return { ...DEFAULT_WINDOW, ...saved }
+      if (saved?.version === WINDOW_STATE_VERSION) {
+        return {
+          width: typeof saved.width === 'number' ? saved.width : DEFAULT_WINDOW.width,
+          height: typeof saved.height === 'number' ? saved.height : DEFAULT_WINDOW.height,
+          x: typeof saved.x === 'number' ? saved.x : DEFAULT_WINDOW.x,
+          y: typeof saved.y === 'number' ? saved.y : DEFAULT_WINDOW.y,
+        }
+      }
     } catch {
       // fall through to default
     }
@@ -268,7 +280,11 @@ function loadWindowState(): typeof DEFAULT_WINDOW {
   try {
     const primaryDisplay = screen.getPrimaryDisplay()
     const { width: screenW } = primaryDisplay.workAreaSize
-    return { width: 460, height: 620, x: screenW - 460 - 20, y: 20 }
+    return {
+      ...DEFAULT_WINDOW,
+      x: screenW - DEFAULT_WINDOW.width - 20,
+      y: 20,
+    }
   } catch {
     return { ...DEFAULT_WINDOW }
   }
@@ -277,7 +293,7 @@ function loadWindowState(): typeof DEFAULT_WINDOW {
 function saveWindowState(bounds: { x: number; y: number; width: number; height: number }) {
   const statePath = resolveWindowStatePath()
   try {
-    writeFileSync(statePath, JSON.stringify(bounds))
+    writeFileSync(statePath, JSON.stringify({ ...bounds, version: WINDOW_STATE_VERSION }))
   } catch {
     // ignore
   }
@@ -315,7 +331,23 @@ function createWindow() {
     },
   })
 
+  mainWindow.setIgnoreMouseEvents(false)
+  mainWindow.setFocusable(true)
+  mainWindow.focus()
+
   mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'))
+
+  if (process.env.SENTRA_DESKTOP_DEBUG === '1') {
+    mainWindow.webContents.on('console-message', (_event, level, message, line, source) => {
+      console.error(`[renderer:${level}] ${source}:${line} ${message}`)
+    })
+    mainWindow.webContents.on('did-fail-load', (_event, code, description, url) => {
+      console.error(`[renderer:did-fail-load] ${code} ${description} ${url}`)
+    })
+    mainWindow.webContents.on('render-process-gone', (_event, details) => {
+      console.error(`[renderer:gone] ${details.reason} ${details.exitCode}`)
+    })
+  }
 
   if (isSmokeMode) {
     const exitSmokeMode = () => {
@@ -359,8 +391,40 @@ app.whenReady().then(() => {
     }
   })
 
+  // Real process/OS numbers only — the HUD must never render invented telemetry.
+  let lastCpuSample = process.cpuUsage()
+  let lastCpuSampleAt = Date.now()
+
+  ipcMain.handle('system:stats', () => {
+    const memory = process.memoryUsage()
+    const totalBytes = os.totalmem()
+
+    // percentCPUUsage from Electron is cumulative since launch, so it flatlines while
+    // idle; sample the delta instead to show what the shell is doing right now.
+    const now = Date.now()
+    const cpuDelta = process.cpuUsage(lastCpuSample)
+    const elapsedMs = Math.max(1, now - lastCpuSampleAt)
+    lastCpuSample = process.cpuUsage()
+    lastCpuSampleAt = now
+
+    return {
+      heapMb: memory.heapUsed / 1024 / 1024,
+      heapLimitMb: memory.heapTotal / 1024 / 1024,
+      cpuPercent: Math.min(
+        100,
+        ((cpuDelta.user + cpuDelta.system) / 1000 / elapsedMs / os.cpus().length) * 100
+      ),
+      usedMemGb: (totalBytes - os.freemem()) / 1024 ** 3,
+      totalMemGb: totalBytes / 1024 ** 3,
+      uptimeSeconds: process.uptime(),
+    }
+  })
+
   ipcMain.on('window:close', () => {
     mainWindow?.close()
+  })
+  ipcMain.on('window:minimize', () => {
+    mainWindow?.minimize()
   })
   ipcMain.handle('window:get-pos', () => mainWindow?.getPosition())
   ipcMain.on('window:set-pos', (_event, { x, y }: { x: number; y: number }) => {
@@ -374,8 +438,8 @@ app.whenReady().then(() => {
     const currentBounds = mainWindow.getBounds()
 
     if (mode === 'expanded') {
-      const panelWidth = 452
-      const panelHeight = 612
+      const panelWidth = DEFAULT_WINDOW.width - 8
+      const panelHeight = DEFAULT_WINDOW.height - 8
       // Keep current X/Y if valid, otherwise default to top-right
       const x =
         currentBounds.x >= 0 && currentBounds.x + panelWidth <= screenW
@@ -386,7 +450,12 @@ app.whenReady().then(() => {
       mainWindow.setBounds({ x, y, width: panelWidth, height: panelHeight })
     } else {
       // Restore normal size, keep position
-      mainWindow.setBounds({ x: currentBounds.x, y: currentBounds.y, width: 460, height: 620 })
+      mainWindow.setBounds({
+        x: currentBounds.x,
+        y: currentBounds.y,
+        width: DEFAULT_WINDOW.width,
+        height: DEFAULT_WINDOW.height,
+      })
     }
   })
 

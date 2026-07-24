@@ -128,6 +128,7 @@ type DesktopWindow = Window &
       onStream?: (channel: string, callback: (payload: unknown) => void) => void
       offStream?: (channel: string, callback: (payload: unknown) => void) => void
       close?: () => void
+      minimize?: () => void
       getWindowPos?: () => Promise<number[]>
       setWindowPos?: (x: number, y: number) => void
     }
@@ -2309,7 +2310,7 @@ function updateMiniPanel() {
     },
     optimize: {
       title: 'Optimizer',
-      tag: 'Codieverse',
+      tag: 'drferdiskandar',
       copy: 'LLM-backed super-prompt editor.',
       subtitle: 'LLM editor',
     },
@@ -2616,17 +2617,6 @@ copyLastBtn?.addEventListener('click', () => {
   })
 })
 
-function enterMiniMode() {
-  if (!consoleRig || !miniWidget || !miniPanel) return
-  const desktop = (window as DesktopWindow).sentraDesktop
-  widgetState = 'minimized'
-  consoleRig.setAttribute('hidden', '')
-  miniWidget.removeAttribute('hidden')
-  miniPanel.setAttribute('hidden', '')
-  miniPanel.classList.remove('open')
-  void desktop?.invoke?.('desktop:toggle-mini', { mode: 'minimized' })
-}
-
 function exitMiniMode() {
   if (!consoleRig || !miniWidget || !miniPanel) return
   const desktop = (window as DesktopWindow).sentraDesktop
@@ -2640,7 +2630,9 @@ function exitMiniMode() {
   input?.focus()
 }
 
-miniToggleBtn?.addEventListener('click', () => enterMiniMode())
+miniToggleBtn?.addEventListener('click', () => {
+  desktopWindow.sentraDesktop?.minimize?.()
+})
 miniBar?.addEventListener('click', (e) => {
   if (widgetState === 'minimized' && !dragDetected) {
     e.stopPropagation()
@@ -2700,7 +2692,7 @@ if (shell && display) {
 void loadShellState()
 
 const NODRAG_SELECTOR =
-  'button, input, a, select, textarea, [contenteditable="true"], .console-box, .mini-console, .overlay-panel, .slash-palette, .suggestion-panel'
+  'button, input, a, select, textarea, label, span, strong, svg, path, [contenteditable="true"], .console-box, .mini-console, .overlay-panel, .slash-palette, .suggestion-panel, .mode-bar, .mode-btn, .command-bar, .cmd-input, .secondary-btn, .action-btn, .optimizer-lane-switch, .optimizer-lane-btn, .window-controls, .close-btn, .mini-toggle-btn, .mini-mode-bar, .mini-mode-btn, .mini-cmd-bar, .mini-cmd-input, .mini-btn-sm'
 
 let dragStart: { mx: number; my: number; wx: number; wy: number } | null = null
 let dragAttempt = 0
@@ -2714,13 +2706,11 @@ function cancelDrag() {
 document.addEventListener('mousedown', async (event) => {
   if (event.button !== 0 || !(event.target instanceof HTMLElement)) return
 
-  const dragSurface = widgetState === 'full' ? consoleRig : miniWidget
+  const dragSurface = widgetState === 'minimized' ? miniWidget : shell
   if (!dragSurface || dragSurface.hidden || !dragSurface.contains(event.target)) return
   if (event.target.closest(NODRAG_SELECTOR)) return
 
-  if (widgetState === 'minimized') {
-    dragDetected = false
-  }
+  dragDetected = false
 
   const attempt = ++dragAttempt
   const pos = await desktopWindow.sentraDesktop?.getWindowPos?.()
@@ -2736,20 +2726,95 @@ document.addEventListener('mousemove', (event) => {
     return
   }
 
-  if (
-    widgetState === 'minimized' &&
-    (Math.abs(event.screenX - dragStart.mx) > 3 || Math.abs(event.screenY - dragStart.my) > 3)
-  ) {
+  const dx = event.screenX - dragStart.mx
+  const dy = event.screenY - dragStart.my
+  const distance = Math.hypot(dx, dy)
+
+  if (distance <= 3) {
+    return
+  }
+
+  if (widgetState === 'minimized') {
     dragDetected = true
   }
 
-  desktopWindow.sentraDesktop?.setWindowPos?.(
-    dragStart.wx + (event.screenX - dragStart.mx),
-    dragStart.wy + (event.screenY - dragStart.my)
-  )
+  desktopWindow.sentraDesktop?.setWindowPos?.(dragStart.wx + dx, dragStart.wy + dy)
 })
 
 document.addEventListener('mouseup', cancelDrag)
 window.addEventListener('blur', cancelDrag)
+
+interface DesktopSystemStats {
+  heapMb: number
+  heapLimitMb: number
+  cpuPercent: number
+  usedMemGb: number
+  totalMemGb: number
+  uptimeSeconds: number
+}
+
+const HUD_POLL_MS = 1000
+
+function isSystemStats(payload: unknown): payload is DesktopSystemStats {
+  return (
+    isObjectRecord(payload) &&
+    typeof payload.heapMb === 'number' &&
+    typeof payload.cpuPercent === 'number' &&
+    typeof payload.uptimeSeconds === 'number'
+  )
+}
+
+function formatUptime(totalSeconds: number) {
+  const seconds = Math.max(0, Math.floor(totalSeconds))
+  const hh = String(Math.floor(seconds / 3600)).padStart(2, '0')
+  const mm = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0')
+  const ss = String(seconds % 60).padStart(2, '0')
+  return `${hh}:${mm}:${ss}`
+}
+
+function setHudText(id: string, text: string) {
+  const element = document.getElementById(id)
+  if (element) {
+    element.textContent = text
+  }
+}
+
+function setHudBar(id: string, ratio: number) {
+  const element = document.getElementById(id)
+  if (element) {
+    element.style.width = `${Math.round(Math.min(1, Math.max(0, ratio)) * 100)}%`
+  }
+}
+
+function applySystemStats(stats: DesktopSystemStats) {
+  const heapLabel = `${stats.heapMb.toFixed(1)} MB`
+  const cpuLabel = `${stats.cpuPercent.toFixed(1)}%`
+
+  setHudText('hudTemp', heapLabel)
+  setHudText('hudLoad', cpuLabel)
+  setHudText('hudMem', `${stats.usedMemGb.toFixed(1)} / ${Math.round(stats.totalMemGb)} GB`)
+  setHudText('hudUptime', formatUptime(stats.uptimeSeconds))
+  setHudBar('hudTempBar', stats.heapLimitMb > 0 ? stats.heapMb / stats.heapLimitMb : 0)
+  setHudBar('hudLoadBar', stats.cpuPercent / 100)
+
+  setHudText('mHudTemp', heapLabel)
+  setHudText('mHudLoad', cpuLabel)
+  setHudText('mHudMem', `${stats.usedMemGb.toFixed(1)}/${Math.round(stats.totalMemGb)}`)
+}
+
+async function pollSystemStats() {
+  const stats = await desktopWindow.sentraDesktop?.invoke?.('system:stats').catch(() => null)
+
+  if (isSystemStats(stats)) {
+    applySystemStats(stats)
+  }
+}
+
+if (document.getElementById('systemHud')) {
+  void pollSystemStats()
+  window.setInterval(() => {
+    void pollSystemStats()
+  }, HUD_POLL_MS)
+}
 
 export {}

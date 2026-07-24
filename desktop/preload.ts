@@ -58,6 +58,7 @@ contextBridge.exposeInMainWorld('sentraDesktop', {
   invoke: (channel: string, payload?: unknown) =>
     ipcRenderer.invoke(channel, payload) as Promise<unknown>,
   close: () => ipcRenderer.send('window:close'),
+  minimize: () => ipcRenderer.send('window:minimize'),
   getWindowPos: () => ipcRenderer.invoke('window:get-pos'),
   setWindowPos: (x: number, y: number) => ipcRenderer.send('window:set-pos', { x, y }),
 })

@@ -58,9 +58,9 @@
 
       <!-- HUD -->
       <div class="mini-hud">
-        <div class="mini-hud-item"><span class="mini-hud-label">Temp</span><span class="mini-hud-value" id="mHudTemp">42&deg;C</span></div>
-        <div class="mini-hud-item"><span class="mini-hud-label">Load</span><span class="mini-hud-value" id="mHudLoad">12%</span></div>
-        <div class="mini-hud-item"><span class="mini-hud-label">Mem</span><span class="mini-hud-value">4.2/32</span></div>
+        <div class="mini-hud-item"><span class="mini-hud-label">Heap</span><span class="mini-hud-value" id="mHudTemp">&mdash;</span></div>
+        <div class="mini-hud-item"><span class="mini-hud-label">Load</span><span class="mini-hud-value" id="mHudLoad">&mdash;</span></div>
+        <div class="mini-hud-item"><span class="mini-hud-label">Mem</span><span class="mini-hud-value" id="mHudMem">&mdash;</span></div>
       </div>
 
       <!-- Command Bar -->
@@ -114,11 +114,41 @@
       <div class="screen-area">
         <div class="screen-content" id="screenContent" style="display:flex;flex-direction:column;height:100%;">
 
-          <!-- Window Controls (floating, no title bar) -->
-          <div class="window-controls">
-            <div class="status-dot"></div>
-            <button class="mini-toggle-btn" id="miniToggleBtn" title="Minimize to mini widget" type="button">&#8212;</button>
-            <button class="close-btn" id="closeBtn" type="button">&times;</button>
+          <!-- Card Header & Drag Bar -->
+          <div class="card-header" id="panelHeader">
+            <div class="brand-group">
+              <div class="brand-icon">
+                <svg viewBox="0 0 363 363" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <linearGradient id="sentraLogoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="#FF7A00" />
+                      <stop offset="50%" stop-color="#FF4500" />
+                      <stop offset="100%" stop-color="#EA580C" />
+                    </linearGradient>
+                    <filter id="sentraLogoNeumo" x="-20%" y="-20%" width="140%" height="140%">
+                      <feDropShadow dx="2" dy="3" stdDeviation="2.5" flood-color="#000000" flood-opacity="0.6"/>
+                      <feDropShadow dx="-1" dy="-1" stdDeviation="1.5" flood-color="#ffffff" flood-opacity="0.12"/>
+                    </filter>
+                  </defs>
+                  <g fill="url(#sentraLogoGrad)" filter="url(#sentraLogoNeumo)">
+                    <path d="M78 175.3 L233 54.5 L245 72.1 L90 192.9 Z"></path>
+                    <path d="M78 245.2 L198.4 151.3 L211.6 168.1 L90 262.9 Z"></path>
+                    <path d="M104 301 L253.2 184.6 L266.4 201.4 L116 318.6 Z"></path>
+                    <path d="M259.8 193 A29 29 0 0 0 224.2 147.2 L216.3 153.3" fill="none" stroke="url(#sentraLogoGrad)" stroke-width="21.3"></path>
+                    <circle cx="205" cy="159.7" r="10.65"></circle>
+                  </g>
+                </svg>
+              </div>
+              <div>
+                <div class="card-title" id="appTitle">Sentra Prompt Console</div>
+                <div class="card-subtitle">Desktop prompt shell</div>
+              </div>
+            </div>
+            <div class="window-controls">
+              <div class="status-dot"></div>
+              <button class="mini-toggle-btn" id="miniToggleBtn" title="Minimize" type="button">&#8212;</button>
+              <button class="close-btn" id="closeBtn" type="button">&times;</button>
+            </div>
           </div>
 
           <!-- Mode Bar -->
@@ -139,7 +169,7 @@
             </div>
             <div class="status-copy" id="statusCopy">Wrap raw prompts into a deterministic prompt-engineering scaffold.</div>
             <div class="optimizer-lane-row" id="optimizerLaneControls" hidden>
-              <span class="optimizer-lane-label">Codieverse Algorithme</span>
+              <span class="optimizer-lane-label">drferdiskandar Algorithme</span>
               <div class="optimizer-lane-switch">
                 <button class="optimizer-lane-btn active" type="button" data-lane="INTERACTIVE">Interactive</button>
                 <button class="optimizer-lane-btn" type="button" data-lane="DEEP">Deep</button>
@@ -199,22 +229,22 @@
             </div>
             <div class="footer-hud" id="systemHud">
               <div class="hud-item">
-                <span class="hud-label">SoC Temp</span>
-                <span class="hud-value" id="hudTemp">42&deg;C</span>
-                <div class="hud-bar"><div class="hud-bar-fill temp" id="hudTempBar" style="width:35%"></div></div>
+                <span class="hud-label">Heap</span>
+                <span class="hud-value" id="hudTemp">&mdash;</span>
+                <div class="hud-bar"><div class="hud-bar-fill temp" id="hudTempBar" style="width:0%"></div></div>
               </div>
               <div class="hud-item">
                 <span class="hud-label">CPU Load</span>
-                <span class="hud-value" id="hudLoad">12%</span>
-                <div class="hud-bar"><div class="hud-bar-fill load" id="hudLoadBar" style="width:12%"></div></div>
+                <span class="hud-value" id="hudLoad">&mdash;</span>
+                <div class="hud-bar"><div class="hud-bar-fill load" id="hudLoadBar" style="width:0%"></div></div>
               </div>
               <div class="hud-item">
                 <span class="hud-label">Memory</span>
-                <span class="hud-value" id="hudMem">4.2 / 32 GB</span>
+                <span class="hud-value" id="hudMem">&mdash;</span>
               </div>
               <div class="hud-item">
                 <span class="hud-label">Uptime</span>
-                <span class="hud-value" id="hudUptime">00:00:00</span>
+                <span class="hud-value" id="hudUptime">&mdash;</span>
               </div>
             </div>
           </div>
@@ -232,5 +262,9 @@
       <div class="port wide"></div><div class="port"></div>
       <div class="port wide"></div><div class="port"></div><div class="port"></div>
     </div>
-  </div>  <script src="./renderer.js"></script></body>
+  </div>  <!-- renderer.js is emitted as CommonJS (tsconfig.desktop.json) but loaded as a classic
+       script under contextIsolation, where `exports` does not exist. Without this shim the
+       CJS preamble throws before any listener is registered. -->
+  <script>var exports = {};</script>
+  <script src="./renderer.js"></script></body>
 </html>
