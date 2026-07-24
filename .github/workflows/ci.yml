@@ -40,6 +40,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Every type that comes from @prisma/client is generated, not committed.
+      # Without this step lint and typecheck fail on ~30 missing exports.
+      - name: Generate Prisma client
+        run: pnpm run db:generate
+
       - name: Run lint
         run: pnpm run lint
 
