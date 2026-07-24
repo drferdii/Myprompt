@@ -39,7 +39,13 @@ prisma/migrations/**/migration_lock.toml
 dist-electron/
 
 # local data & workspace
-data/
+# data/* rather than data/: git cannot re-include anything under an excluded
+# directory, and data/templates holds the prompt template modules — source, not
+# local data. desktop/ipc/library.ts and lib/templates/loader.ts import them, so
+# the build breaks anywhere that directory is missing.
+data/*
+!data/templates/
+!data/templates/**
 *.bat
 
 # superpowers & agent local files
